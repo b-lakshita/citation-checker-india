@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indian Legal Citation Checker</title>
+<style>
+  :root{ color-scheme: light; --bg:#f3f1ec; --card:#ffffff; --ink:#1c1b19; --muted:#6b6862;
+    --line:#e4e1da; --accent:#6b4f2a; --ok:#1f7a4d; --warn:#b06f00; --bad:#b3261e;
+    --okbg:#e7f3ec; --warnbg:#fbf1dd; --badbg:#fbe7e5; --supbg:#efe7d8; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Iowan Old Style",Georgia,serif;}
+  .appbar{background:#fff;border-bottom:1px solid var(--line);}
+  .appbar .inner{max-width:1180px;margin:0 auto;padding:14px 22px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  .brand{font-size:20px;font-weight:700;} .brand .mark{color:var(--accent);}
+  .tag{color:var(--muted);font-size:13.5px;} .appbar .spacer{flex:1}
+  .appbar a.help{font-size:13px;color:var(--accent);text-decoration:none;font-weight:600;margin-left:14px;}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 22px 56px;}
+  .layout{display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;}
+  @media(max-width:880px){ .layout{grid-template-columns:1fr;} aside.side{order:2} }
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px;}
+  .card h2.k{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 12px;font-weight:700;}
+  textarea{width:100%;min-height:160px;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:8px;
+    font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#fcfbf9;color:var(--ink);resize:vertical;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+  button{font:600 14px/1 inherit;font-family:inherit;border:1px solid var(--accent);background:var(--accent);color:#fff;padding:10px 16px;border-radius:8px;cursor:pointer;}
+  button.ghost{background:#fff;color:var(--accent);} button:hover{opacity:.92}
+  select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit;font-size:13px;}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px;}
+  .pill{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;background:#fff;} .pill b{font-size:15px;}
+  h2.section{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:22px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+  .doc{background:#fcfbf9;border:1px solid var(--line);border-radius:8px;padding:16px 18px;white-space:pre-wrap;font:15px/1.7 "Iowan Old Style",Georgia,serif;}
+  sup.fn{font-size:.72em;line-height:0;}
+  sup.fn a{background:var(--supbg);color:var(--accent);text-decoration:none;font-weight:700;border-radius:4px;padding:1px 4px;margin-left:1px;}
+  sup.fn a.unres{background:var(--warnbg);color:var(--warn);}
+  sup.fn a:hover{background:var(--accent);color:#fff;}
+  ol.auth{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:fn;}
+  ol.auth li{counter-increment:fn;display:flex;gap:12px;padding:11px 6px;border-bottom:1px solid var(--line);align-items:flex-start;}
+  ol.auth li::before{content:counter(fn);min-width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:var(--supbg);color:var(--accent);border-radius:6px;font-weight:700;font-size:13px;flex:0 0 auto;}
+  .auth-body{flex:1;min-width:0;} .auth-cite{font-size:14.5px;} .auth-cite i{font-style:italic;} .auth-cite .rep{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;}
+  .auth-meta{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .treat{font-size:12.5px;margin-top:5px;padding:6px 9px;border-radius:7px;line-height:1.4;}
+  .treat.bad{background:var(--badbg);color:#8a2018;} .treat.warn{background:var(--warnbg);color:#7a4d00;}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;margin:4px 4px 0 0;}
+  .b-ok{background:var(--okbg);color:var(--ok);} .b-warn{background:var(--warnbg);color:var(--warn);} .b-bad{background:var(--badbg);color:var(--bad);} .b-type{background:#eef0f4;color:#445;}
+  .auth-act{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
+  a.verify,button.mini{font-size:12.5px;color:var(--accent);font-weight:600;text-decoration:none;border:1px solid var(--accent);padding:6px 10px;border-radius:7px;white-space:nowrap;background:#fff;cursor:pointer;text-align:center;}
+  a.verify:hover,button.mini:hover{background:var(--accent);color:#fff;}
+  ul.statutes{list-style:none;margin:6px 0 0;padding:0;}
+  ul.statutes li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px;}
+  ul.statutes .stype{font-size:11px;font-weight:700;color:#445;background:#eef0f4;border-radius:6px;padding:2px 7px;margin-right:8px;}
+  table{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px;} th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);} .cite{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;}
+  details{margin-top:14px;} summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;}
+  .ref{font-size:13.5px;color:#333;} .ref code{background:#f0eee9;padding:1px 5px;border-radius:4px;font-size:12.5px;}
+  .empty{color:var(--muted);font-style:italic;padding:14px 0;}
+  .copybox{width:100%;min-height:120px;margin-top:8px;font:12.5px/1.5 ui-monospace,monospace;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fcfbf9;}
+  aside.side .card{padding:14px 14px;position:sticky;top:14px;}
+  .hist-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .hist-head .clear{font-size:11.5px;color:var(--muted);background:none;border:none;cursor:pointer;padding:2px 4px;} .hist-head .clear:hover{color:var(--bad);}
+  ul.hist{list-style:none;margin:0;padding:0;max-height:60vh;overflow:auto;}
+  ul.hist li{border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:8px;cursor:pointer;background:#fcfbf9;position:relative;} ul.hist li:hover{border-color:var(--accent);background:#fff;}
+  .h-title{font-size:13.5px;font-weight:600;line-height:1.35;padding-right:16px;} .h-meta{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .h-del{position:absolute;top:6px;right:7px;border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:2px;} .h-del:hover{color:var(--bad);}
+  .hist-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 2px;}
+  footer{max-width:1180px;margin:0 auto;padding:8px 22px 40px;color:var(--muted);font-size:12px;line-height:1.6;} footer b{color:#555;} footer a{color:var(--accent);}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9;} .toast.show{opacity:1;}
+  .err{background:var(--badbg);color:#8a2018;padding:12px 14px;border-radius:8px;font-size:13.5px;}
+  .notice{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:9px 14px;margin-bottom:18px;font-size:13px;}
+  .notice .nlinks{display:flex;gap:10px;align-items:center;}
+  .notice a{color:var(--accent);font-weight:600;text-decoration:none;} .notice a:hover{text-decoration:underline;}
+  .notice button{font:600 12px inherit;font-family:inherit;background:var(--accent);border:1px solid var(--accent);color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;}
+  .modal-bg{position:fixed;inset:0;background:rgba(28,27,25,.5);display:none;align-items:flex-start;justify-content:center;z-index:20;padding:34px 16px;overflow:auto;}
+  .modal-bg.show{display:flex;}
+  .modal{background:#fff;max-width:680px;width:100%;border-radius:14px;padding:24px 26px 26px;box-shadow:0 18px 50px rgba(0,0,0,.25);}
+  .modal h3{font-size:20px;margin:0 0 2px;color:var(--accent);} .modal .msub{color:var(--muted);font-size:12.5px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px;}
+  .modal ol{padding-left:20px;margin:0;} .modal li{margin:0 0 9px;font-size:13.5px;line-height:1.5;} .modal li b{color:var(--ink);}
+  .modal .mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .modal .mclose{border:none;background:none;font-size:22px;line-height:1;color:var(--muted);cursor:pointer;}
+  .modal .mfoot{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px;border-top:1px solid var(--line);padding-top:14px;}
+  .modal .mfoot .dl{background:var(--accent);border:1px solid var(--accent);color:#fff;font:600 13px inherit;font-family:inherit;padding:8px 14px;border-radius:8px;text-decoration:none;}
+  .modal .mnote{font-size:11.5px;color:var(--muted);font-style:italic;flex:1;min-width:160px;}
+</style>
+</head>
+<body>
+<header class="appbar"><div class="inner">
+  <span class="brand"><span class="mark">¶</span> Indian Citation Checker</span>
+  <span class="tag">Cases · statutes · good-law flags · footnote &amp; verify</span>
+  <span class="spacer"></span>
+  <a class="help" href="#howto">How it works</a>
+  <a class="help" href="#" onclick="openTerms();return false;">Terms</a>
+</div></header>
+
+<div class="wrap">
+ <div id="notice" class="notice">
+   <span>⚖ A drafting aid — <b>not legal advice</b>. Verify every citation before you rely on it.</span>
+   <span class="nlinks"><a href="India-Citation-Checker-Terms.docx" download>Download terms (.docx)</a><button onclick="dismissNotice()">Got it</button></span>
+ </div>
+ <div class="layout">
+  <main>
+    <div class="card">
+      <h2 class="k">1 · Paste your text</h2>
+      <textarea id="inp" placeholder="Paste a paragraph, brief, or judgment — the tool finds the cases, statutes and Articles in it.&#10;&#10;e.g.  ADM Jabalpur was overruled by Puttaswamy. Section 66A fell in Shreya Singhal."></textarea>
+      <div class="row">
+        <button onclick="run()">Footnote &amp; cite</button>
+        <button class="ghost" onclick="loadSample()">Load sample</button>
+        <button class="ghost" onclick="clearAll()">Clear</button>
+        <span style="flex:1"></span>
+        <label style="font-weight:600;color:var(--ink);font-size:13px">Style&nbsp;
+          <select id="style" onchange="if(lastText)run(true)">
+            <option value="court">Court practice (SCC/AIR)</option>
+            <option value="SILC">SILC (academic)</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="card" id="out" style="display:none">
+      <h2 class="k">2 · Result</h2>
+      <div class="stats" id="stats"></div>
+      <div id="report"></div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:16px;border-top:1px dashed var(--line);padding-top:12px;">
+        Citations and good-law flags are resolved from a curated index of landmark judgments and should always be confirmed via the
+        <b>Verify on Indian Kanoon</b> link. “Needs lookup” means a case isn’t in the index — not that it’s wrong.
+        Statute/Article detection is rule-based and nationwide. Treatment notes are guidance, not a substitute for shepardising.
+      </div>
+    </div>
+
+    <div class="card" id="howto">
+      <details>
+        <summary>How it works</summary>
+        <div class="ref" style="margin-top:10px">
+          <p>Paste any text. The tool finds every case — by name, by citation, or by “X v Y” in any form — resolves landmark judgments to their authoritative citation, flags <b>overruled / doubted</b> cases, and detects statutes &amp; Articles. Each item gets a verify link. Your runs stay in <b>History</b> on this browser only; nothing is uploaded.</p>
+        </div>
+      </details>
+    </div>
+  </main>
+
+  <aside class="side">
+    <div class="card">
+      <div class="hist-head">
+        <h2 class="k" style="margin:0">History</h2>
+        <button class="clear" onclick="clearHistory()">Clear all</button>
+      </div>
+      <ul class="hist" id="histlist"></ul>
+      <div class="hist-empty" id="histempty">No saved checks yet. Run a check and it’ll appear here — stored on this browser.</div>
+    </div>
+  </aside>
+ </div>
+</div>
+
+<footer>
+  <b>Not legal advice.</b> This tool checks citation format, resolves a curated set of landmark Indian judgments, and flags known overruling; it does not guarantee a case exists, is good law, or is cited correctly — always confirm against the official report or Indian&nbsp;Kanoon. See <a href="#" onclick="openTerms();return false;">Terms &amp; Privacy</a>. All processing and history happen locally in your browser; nothing is uploaded.
+</footer>
+
+<div class="modal-bg" id="termsModal" onclick="if(event.target===this)closeTerms()">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Terms of Use and Privacy">
+    <div class="mhead">
+      <div><h3>Terms of Use &amp; Privacy</h3><div class="msub">Indian Citation Checker · Version 1.0</div></div>
+      <button class="mclose" onclick="closeTerms()" aria-label="Close">×</button>
+    </div>
+    <p style="font-size:13.5px;margin:2px 0 4px;">The full Terms of Use &amp; Privacy are provided as a download. By using this tool you accept them.</p>
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 4px;">In short: a drafting aid, not legal advice; verify every citation; nothing you paste is uploaded.</p>
+    <div class="mfoot">
+      <a class="dl" href="India-Citation-Checker-Terms.docx" download>Download Terms (.docx)</a>
+      <span class="mnote">One page · Word format.</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- shared brain: edit cases.js to grow the index -->
+<script src="cases.js"></script>
+<script src="engine.js"></script>
+<script>
+const HKEY='iclc_history_v1';
+let lastText=''; let suppressSave=false;
+const E = window.LegalCite;
+function styleVal(){ return document.getElementById('style').value; }
+function esc(s){return String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));}
+function escAttr(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+
+function citeForHTML(c){
+  const st=styleVal(), primary=E.primaryCite(c,st), secondary=E.secondaryCite(c,st);
+  let s=`<i>${esc(c.name)}</i>, <span class="rep">${esc(primary)}</span>`;
+  if(secondary) s+=` <span class="auth-meta" style="display:inline">(also ${esc(secondary)})</span>`;
+  return s;
+}
+function renderDoc(text,mentions){
+  mentions.sort((a,b)=>a.start-b.start); let html='',cur=0;
+  for(const m of mentions){ if(m.end<cur) continue; html+=esc(text.slice(cur,m.end)); html+=`<sup class="fn"><a class="${m.case?'':'unres'}" href="#fn${m.num}">${m.num}</a></sup>`; cur=m.end; }
+  html+=esc(text.slice(cur)); return html;
+}
+
+function run(isStyleToggle){
+  const out=document.getElementById('out'), report=document.getElementById('report'), stats=document.getElementById('stats');
+  out.style.display='block';
+  if(!E){ stats.innerHTML=''; report.innerHTML='<div class="err">Engine not loaded. Make sure <b>cases.js</b> and <b>engine.js</b> sit in the same folder as this file (and that you opened the page, not the raw text).</div>'; return; }
+  const text=document.getElementById('inp').value; lastText=text;
+  const mentions=E.findMentions(text), authorities=E.buildAuthorities(mentions), statutes=E.findStatutes(text), reporters=E.findReporters(text);
+
+  if(!authorities.length && !statutes.length && !reporters.length){
+    stats.innerHTML=''; report.innerHTML='<p class="empty">No cases, statutes, or citations detected. Paste text that mentions cases (e.g. “Kharak Singh vs Uttar Pradesh”) or provisions (e.g. “Section 66A of the IT Act, 2000”).</p>'; return;
+  }
+  const resolved=authorities.filter(a=>a.case).length, unresolved=authorities.length-resolved, flagged=authorities.filter(a=>a.case&&a.case.treatment).length;
+  stats.innerHTML=
+    `<span class="pill"><b>${authorities.length}</b> authorities</span>`+
+    `<span class="pill" style="border-color:var(--ok)"><b>${resolved}</b> resolved</span>`+
+    `<span class="pill" style="border-color:var(--warn)"><b>${unresolved}</b> need lookup</span>`+
+    (flagged?`<span class="pill" style="border-color:var(--bad)"><b>${flagged}</b> flagged good-law</span>`:'')+
+    (statutes.length?`<span class="pill"><b>${statutes.length}</b> statutes/Articles</span>`:'');
+
+  let html='<h2 class="section">Your text, footnoted</h2>';
+  html+=`<div class="doc">${renderDoc(text,mentions)}</div>`;
+
+  html+='<h2 class="section">Table of Authorities</h2><ol class="auth">';
+  for(const a of authorities){
+    html+=`<li id="fn${a.num}"><div class="auth-body">`;
+    if(a.case){ const c=a.case;
+      html+=`<div class="auth-cite">${citeForHTML(c)}</div><div class="auth-meta">${esc(c.bench)}${/-judge$/.test(c.bench)?' bench':''} · ${c.year} · resolved from landmark index</div>`;
+      html+=`<span class="badge b-ok">resolved</span>`;
+      if(c.treatment){ const t=c.treatment, cls=t.status==='overruled'?'bad':'warn', lbl=t.status==='overruled'?'Overruled':(t.status==='partly'?'Partly overruled':'Doubted');
+        html+=`<span class="badge b-${cls==='bad'?'bad':'warn'}">${lbl} — check good law</span><div class="treat ${cls}">⚠ ${esc(t.note)}</div>`; }
+      html+=`</div><div class="auth-act">`+
+        `<a class="verify" href="${esc(E.kanoonCase(c))}" target="_blank" rel="noopener">Verify on Indian Kanoon ↗</a>`+
+        `<button class="mini" data-act="copy" data-val="${escAttr(E.citePlain(c,styleVal()))}">Copy citation</button>`+
+        `<button class="mini" data-act="claude" data-val="${escAttr(c.name+', '+(c.air||c.scc))}">Send to Claude</button></div></li>`;
+    } else {
+      html+=`<div class="auth-cite"><i>${esc(a.label)}</i> <span class="auth-meta" style="display:inline">— citation needed</span></div><div class="auth-meta">Not in local index. Confirm the case and add its citation.</div><span class="badge b-warn">needs lookup</span></div><div class="auth-act">`+
+        `<a class="verify" href="${esc(E.kanoonRaw(a.label))}" target="_blank" rel="noopener">Search Indian Kanoon ↗</a>`+
+        `<button class="mini" data-act="claude" data-val="${escAttr(a.label)}">Send to Claude</button></div></li>`;
+    }
+  }
+  html+='</ol>';
+
+  if(statutes.length){
+    html+='<h2 class="section">Statutes &amp; provisions</h2><ul class="statutes">';
+    for(const s of statutes){
+      const q = s.canon ? (s.raw+' '+s.canon) : s.raw;
+      const extra = s.canon ? ` <span class="auth-meta" style="display:inline">— ${esc(s.canon)}</span>` : '';
+      html+=`<li><span><span class="stype">${esc(s.type)}</span>${esc(s.raw)}${extra}</span><a class="verify" href="${esc(E.kanoonRaw(q))}" target="_blank" rel="noopener">Look up ↗</a></li>`;
+    }
+    html+='</ul>';
+  }
+
+  if(reporters.length){
+    html+=`<details><summary>Format &amp; risk check on the ${reporters.length} reporter citation(s) you typed</summary><table><thead><tr><th>Citation</th><th>Type</th><th>Flags</th><th>Verify</th></tr></thead><tbody>`;
+    for(const rr of reporters){ const fl=E.checkReporter(rr).map(f=>`<span class="badge b-${f[0]}">${esc(f[1])}</span>`).join(' ');
+      html+=`<tr><td class="cite">${esc(rr.raw)}</td><td><span class="badge b-type">${esc(rr.type)}</span></td><td>${fl}</td><td><a class="verify" href="${esc(E.kanoonRaw(rr.raw))}" target="_blank" rel="noopener">Verify ↗</a></td></tr>`; }
+    html+='</tbody></table></details>';
+  }
+
+  html+='<details><summary>Copy footnoted text + numbered authority list</summary><textarea class="copybox" id="copybox" readonly></textarea></details>';
+  report.innerHTML=html;
+  document.getElementById('copybox').value=E.plainExport(text,mentions,authorities,statutes,styleVal());
+
+  if(!suppressSave && !isStyleToggle && text.trim()) saveRun(text, styleVal(), authorities);
+}
+
+/* history */
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(HKEY)||'[]'); }catch(e){ return []; } }
+function storeHistory(h){ try{ localStorage.setItem(HKEY, JSON.stringify(h)); }catch(e){} }
+function titleFor(text, authorities){ const f=(authorities||[]).find(a=>a.case); if(f) return f.case.name+((authorities.length>1)?(' +'+(authorities.length-1)+' more'):''); const t=text.trim().replace(/\s+/g,' '); return t.slice(0,42)+(t.length>42?'…':''); }
+function saveRun(text, style, authorities){ const h=loadHistory(); if(h.length&&h[0].text===text&&h[0].style===style) return; h.unshift({id:Date.now(),ts:new Date().toISOString(),text,style,title:titleFor(text,authorities),n:authorities.length}); while(h.length>30)h.pop(); storeHistory(h); renderHistory(); }
+function renderHistory(){
+  const h=loadHistory(), ul=document.getElementById('histlist'), empty=document.getElementById('histempty'); ul.innerHTML='';
+  if(!h.length){ empty.style.display='block'; return; } empty.style.display='none';
+  for(const it of h){
+    const li=document.createElement('li'); li.onclick=(e)=>{ if(e.target.classList.contains('h-del'))return; openRun(it.id); };
+    const d=new Date(it.ts), when=d.toLocaleDateString(undefined,{day:'numeric',month:'short'})+' · '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    li.innerHTML=`<button class="h-del" title="Delete" onclick="deleteRun(${it.id})">×</button><div class="h-title">${esc(it.title||'Untitled check')}</div><div class="h-meta">${it.n} authorit${it.n===1?'y':'ies'} · ${when}</div>`;
+    ul.appendChild(li);
+  }
+}
+function openRun(id){ const it=loadHistory().find(x=>x.id===id); if(!it) return; document.getElementById('inp').value=it.text; document.getElementById('style').value=it.style||'court'; suppressSave=true; run(); suppressSave=false; window.scrollTo({top:0,behavior:'smooth'}); toast('Loaded saved check'); }
+function deleteRun(id){ storeHistory(loadHistory().filter(x=>x.id!==id)); renderHistory(); }
+function clearHistory(){ if(confirm('Clear all saved checks on this browser?')){ storeHistory([]); renderHistory(); } }
+
+/* misc */
+function copyText(s){ navigator.clipboard.writeText(s).then(()=>toast('Citation copied')); }
+function sendToClaude(s){ navigator.clipboard.writeText('Please verify this Indian case exists, confirm the correct citation, and tell me the holding and whether it is still good law: '+s); toast('Copied a verification prompt — paste it to Claude'); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1900); }
+function loadSample(){ document.getElementById('inp').value=
+`ADM Jabalpur v Shivkant Shukla was expressly overruled by Puttaswamy, (2017) 10 SCC 1, which also buried the privacy holding in Kharak Singh.
+Section 66A of the Information Technology Act, 2000 was struck down in Shreya Singhal under Articles 14 and 19 of the Constitution; compare Section 124A of the Indian Penal Code, 1860.
+A non-landmark matter: Tata Sons Ltd vs Greenpeace, (2011) 178 DLT 705.`; }
+function clearAll(){ document.getElementById('inp').value=''; document.getElementById('out').style.display='none'; lastText=''; }
+
+/* terms modal + notice */
+function openTerms(){ document.getElementById('termsModal').classList.add('show'); }
+function closeTerms(){ document.getElementById('termsModal').classList.remove('show'); }
+function dismissNotice(){ try{ localStorage.setItem('iclc_notice_seen','1'); }catch(e){} const n=document.getElementById('notice'); if(n) n.style.display='none'; }
+(function(){ try{ if(localStorage.getItem('iclc_notice_seen')==='1'){ const n=document.getElementById('notice'); if(n) n.style.display='none'; } }catch(e){} })();
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeTerms(); });
+
+renderHistory();
+document.getElementById('report').addEventListener('click', function(e){
+  const b=e.target.closest('[data-act]'); if(!b) return; const v=b.getAttribute('data-val')||'';
+  if(b.getAttribute('data-act')==='copy') copyText(v); else if(b.getAttribute('data-act')==='claude') sendToClaude(v);
+});
+</script>
+</body>
+</html>
